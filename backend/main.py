@@ -1,12 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import requests
+from dotenv import load_dotenv
+import requests, os
+
+load_dotenv()
 
 app = FastAPI()
 
+FRONTEND_URL = os.environ["FRONTEND_URL"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
