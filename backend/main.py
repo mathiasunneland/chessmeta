@@ -15,7 +15,13 @@ app.add_middleware(
 @app.get("/stats/{username}")
 def get_chess_stats(username: str):
     url = f"https://api.chess.com/pub/player/{username}"
-    response = requests.get(url)
+
+    headers = {
+        "User-Agent": "Chessmeta/1.0 (contact: MagzyPotato)",
+        "Accept": "application/json"
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
 
     if response.status_code != 200:
         return {"error": "User not found"}
