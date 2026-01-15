@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [username, setUsername] = useState("");
-  const [stats, setStats] = useState<{ username: string; title: string } | null>(null);
+  const [stats, setStats] = useState<{ username: string; title: string; blitz: number; bullet: number; } | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -25,6 +25,8 @@ export default function Home() {
                   Stats for {stats.username || "N/A"}
               </h1>
               <p className="text-black dark:text-zinc-50 mb-2">Title: {stats.title || "N/A"}</p>
+              <p className="text-black dark:text-zinc-50 mb-2">Blitz: {stats.blitz || "N/A"}</p>
+              <p className="text-black dark:text-zinc-50 mb-2">Bullet: {stats.bullet || "N/A"}</p>
               <button
                   onClick={() => setStats(null)}
                   className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 mt-4"
