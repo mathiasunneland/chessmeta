@@ -8,6 +8,7 @@ load_dotenv()
 app = FastAPI()
 
 FRONTEND_URL = os.environ["FRONTEND_URL"]
+CONTACT_EMAIL = os.environ["CONTACT_EMAIL"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,7 +23,7 @@ def get_chess_stats(username: str):
     url = f"https://api.chess.com/pub/player/{username}"
 
     headers = {
-        "User-Agent": "Chessmeta/1.0 (contact: MagzyPotato)",
+        "User-Agent": "Chessmeta/1.0 (contact: {CONTACT_EMAIL})",
         "Accept": "application/json"
     }
 
