@@ -8,6 +8,7 @@ load_dotenv()
 app = FastAPI()
 
 FRONTEND_URL = os.environ["FRONTEND_URL"]
+CONTACT_EMAIL = os.environ["CONTACT_EMAIL"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,20 +20,25 @@ app.add_middleware(
 
 @app.get("/stats/{username}")
 def get_chess_stats(username: str):
-    url = f"https://api.chess.com/pub/player/{username}"
+    profile_url = f"https://api.chess.com/pub/player/{username}"
+    stats_url = f"https://api.chess.com/pub/player/{username}/stats"
 
     headers = {
-        "User-Agent": "Chessmeta/1.0 (contact: MagzyPotato)",
+        "User-Agent": "Chessmeta/1.0 (contact: {CONTACT_EMAIL})",
         "Accept": "application/json"
     }
 
-    response = requests.get(url, headers=headers, timeout=10)
+    profile_response = requests.get(profile_url, headers=headers, timeout=10)
+    stats_response = requests.get(stats_url, headers=headers, timeout=10)
 
-    if response.status_code != 200:
+    if profile_response.status_code != 200 or stats_response.status_code != 200:
         return {"error": "User not found"}
 
-    data = response.json()
+    profile_data = profile_response.json()
+    stats_data = stats_response.json()
     return {
-        "username": data.get("username"),
-        "title": data.get("title"),
+        "username": profile_data.get("username"),
+        "title": profile_data.get("title"),
+        "blitz": stats_data.get("chess_blitz").get("last").get("rating"),
+        "bullet": stats_data.get("chess_bullet").get("last").get("rating")
     }
