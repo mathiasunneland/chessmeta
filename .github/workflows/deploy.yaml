@@ -9,5 +9,5 @@ jobs:
     steps:
       - name: Trigger webhook
         run: |
-          curl -X POST "https://metachess.dev/webhook" \
+          curl -X POST "https://chessmeta.dev/webhook" \
             -H "Authorization: Bearer ${{ secrets.WEBHOOK_TOKEN }}" \
