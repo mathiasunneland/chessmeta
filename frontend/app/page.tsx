@@ -52,6 +52,7 @@ export default function Home() {
             placeholder="Enter Chess.com username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchStats()}
             className="border border-gray-400 rounded p-2 mb-4"
         />
 
