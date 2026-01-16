@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ChessboardComponent from "./components/chessboard";
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -31,6 +32,11 @@ export default function Home() {
               <p className="text-black dark:text-zinc-50 mb-2">Bullet: {stats.bullet_rating_current || "N/A"} Peak: {stats.bullet_rating_highest || "N/A"}</p>
               <p className="text-black dark:text-zinc-50 mb-2">Blitz: {stats.blitz_rating_current || "N/A"} Peak: {stats.blitz_rating_highest || "N/A"}</p>
               <p className="text-black dark:text-zinc-50 mb-2">Rapid: {stats.rapid_rating_current || "N/A"} Peak: {stats.rapid_rating_highest || "N/A"}</p>
+
+              <div style={{ width: 300 }}>
+                  <ChessboardComponent />
+              </div>
+
               <button
                   onClick={() => setStats(null)}
                   className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 mt-4"
