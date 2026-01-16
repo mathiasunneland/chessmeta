@@ -38,6 +38,7 @@ def get_chess_stats(username: str):
     stats_data = stats_response.json()
     return {
         "username": profile_data.get("username"),
+        "avatar": profile_data.get("avatar"),
         "title": profile_data.get("title"),
         "bullet_rating_current": stats_data.get("chess_bullet", {}).get("last", {}).get("rating"),
         "bullet_rating_highest": stats_data.get("chess_bullet", {}).get("best", {}).get("rating"),
