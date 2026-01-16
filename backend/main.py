@@ -38,7 +38,12 @@ def get_chess_stats(username: str):
     stats_data = stats_response.json()
     return {
         "username": profile_data.get("username"),
+        "avatar": profile_data.get("avatar"),
         "title": profile_data.get("title"),
-        "blitz": stats_data.get("chess_blitz").get("last").get("rating"),
-        "bullet": stats_data.get("chess_bullet").get("last").get("rating")
+        "bullet_rating_current": stats_data.get("chess_bullet", {}).get("last", {}).get("rating"),
+        "bullet_rating_highest": stats_data.get("chess_bullet", {}).get("best", {}).get("rating"),
+        "blitz_rating_current": stats_data.get("chess_blitz", {}).get("last", {}).get("rating"),
+        "blitz_rating_highest": stats_data.get("chess_blitz", {}).get("best", {}).get("rating"),
+        "rapid_rating_current": stats_data.get("chess_rapid", {}).get("last", {}).get("rating"),
+        "rapid_rating_highest": stats_data.get("chess_rapid", {}).get("best", {}).get("rating"),
     }

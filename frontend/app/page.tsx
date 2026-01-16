@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [username, setUsername] = useState("");
-  const [stats, setStats] = useState<{ username: string; title: string; blitz: number; bullet: number; } | null>(null);
+  const [stats, setStats] = useState<{ username: string; avatar: string; title: string; bullet_rating_current: number; bullet_rating_highest: number; blitz_rating_current: number; blitz_rating_highest: number; rapid_rating_current: number; rapid_rating_highest: number; } | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -21,12 +21,16 @@ export default function Home() {
   if (stats) {
       return (
           <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-10">
+              <img
+                  src={stats.avatar || "https://www.chess.com/bundles/web/images/user-image.007dad08.svg"}
+                  className="w-24 h-24 mb-4"
+              />
               <h1 className="text-3xl font-semibold text-black dark:text-zinc-50 mb-4">
-                  Stats for {stats.username || "N/A"}
+                  Stats for {stats.title || ""} {stats.username || "user not found"}
               </h1>
-              <p className="text-black dark:text-zinc-50 mb-2">Title: {stats.title || "N/A"}</p>
-              <p className="text-black dark:text-zinc-50 mb-2">Blitz: {stats.blitz || "N/A"}</p>
-              <p className="text-black dark:text-zinc-50 mb-2">Bullet: {stats.bullet || "N/A"}</p>
+              <p className="text-black dark:text-zinc-50 mb-2">Bullet: {stats.bullet_rating_current || "N/A"} Peak: {stats.bullet_rating_highest || "N/A"}</p>
+              <p className="text-black dark:text-zinc-50 mb-2">Blitz: {stats.blitz_rating_current || "N/A"} Peak: {stats.blitz_rating_highest || "N/A"}</p>
+              <p className="text-black dark:text-zinc-50 mb-2">Rapid: {stats.rapid_rating_current || "N/A"} Peak: {stats.rapid_rating_highest || "N/A"}</p>
               <button
                   onClick={() => setStats(null)}
                   className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 mt-4"
@@ -48,6 +52,7 @@ export default function Home() {
             placeholder="Enter Chess.com username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchStats()}
             className="border border-gray-400 rounded p-2 mb-4"
         />
 
