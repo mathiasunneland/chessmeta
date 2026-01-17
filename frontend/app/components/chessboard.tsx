@@ -6,7 +6,6 @@ import {
     Chessboard,
     chessColumnToColumnIndex,
     PieceDropHandlerArgs,
-    PieceHandlerArgs,
     SquareHandlerArgs
 } from "react-chessboard";
 
