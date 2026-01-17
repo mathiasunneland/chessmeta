@@ -33,7 +33,7 @@ export default function Home() {
               <p className="text-black dark:text-zinc-50 mb-2">Blitz: {stats.blitz_rating_current || "N/A"} Peak: {stats.blitz_rating_highest || "N/A"}</p>
               <p className="text-black dark:text-zinc-50 mb-2">Rapid: {stats.rapid_rating_current || "N/A"} Peak: {stats.rapid_rating_highest || "N/A"}</p>
 
-              <div style={{ width: 300 }}>
+              <div style={{ width: 600 }}>
                   <ChessboardComponent />
               </div>
 
