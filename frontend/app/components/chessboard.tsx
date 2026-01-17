@@ -10,12 +10,22 @@ import {
     SquareHandlerArgs
 } from "react-chessboard";
 
-export default function ChessboardComponent() {
-    const chessGameRef = useRef(new Chess());
+export interface BaseChessboardProps {
+    initialPosition?: string;
+    onMove?: (from: Square, to: Square, promotion?: PieceSymbol) => void;
+}
+
+export default function ChessboardComponent( { initialPosition, onMove }: BaseChessboardProps) {
+    const chessGameRef = useRef(new Chess(initialPosition));
     const chessGame = chessGameRef.current;
 
     const chessboardRef = useRef<HTMLDivElement>(null);
     const [squareWidth, setSquareWidth] = useState(0);
+
+    const [chessPosition, setChessPosition] = useState(chessGame.fen());
+    const [moveFrom, setMoveFrom] = useState('');
+    const [optionSquares, setOptionSquares] = useState({});
+    const [promotionMove, setPromotionMove] = useState<Omit<PieceDropHandlerArgs, 'piece'> | null>(null);
 
     useLayoutEffect(() => {
         if (chessboardRef.current) {
@@ -25,11 +35,6 @@ export default function ChessboardComponent() {
             }
         }
     }, []);
-
-    const [chessPosition, setChessPosition] = useState(chessGame.fen());
-    const [moveFrom, setMoveFrom] = useState('');
-    const [optionSquares, setOptionSquares] = useState({});
-    const [promotionMove, setPromotionMove] = useState<Omit<PieceDropHandlerArgs, 'piece'> | null>(null);
 
     // Highlight move options
     function getMoveOptions(square: Square) {
@@ -58,21 +63,19 @@ export default function ChessboardComponent() {
     function handleMove(from: Square, to: Square) {
         const moves = chessGame.moves({ square: from, verbose: true });
         const foundMove = moves.find(m => m.from === from && m.to === to);
-
         if (!foundMove) return false;
 
-        // Detect promotion
         const promotionNeeded = chessGame.get(from)?.type === 'p' && (to[1] === '8' || to[1] === '1');
         if (promotionNeeded) {
             setPromotionMove({ sourceSquare: from, targetSquare: to });
             return true;
         }
 
-        // Normal move
         chessGame.move({ from, to });
         setChessPosition(chessGame.fen());
         setOptionSquares({});
         setMoveFrom('');
+        onMove?.(from, to);
         return true;
     }
 
@@ -83,7 +86,6 @@ export default function ChessboardComponent() {
             setOptionSquares({});
             return;
         }
-
         if (moveFrom) {
             const moved = handleMove(moveFrom as Square, square as Square);
 
@@ -95,10 +97,8 @@ export default function ChessboardComponent() {
                 setMoveFrom('');
                 setOptionSquares({});
             }
-
             return;
         }
-
         if (piece) {
             const hasOptions = getMoveOptions(square as Square);
             if (hasOptions) setMoveFrom(square);
@@ -127,6 +127,8 @@ export default function ChessboardComponent() {
         setPromotionMove(null);
         setOptionSquares({});
         setMoveFrom('');
+
+        onMove?.(sourceSquare as Square, targetSquare as Square, piece);
     }
 
     // Calculate left position for promotion overlay

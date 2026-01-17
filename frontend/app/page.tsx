@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import ChessboardComponent from "./components/chessboard";
+import ChessboardAnalysisComponent, { Analysis } from "./components/chessboard_analysis";
 
 export default function Home() {
   const [username, setUsername] = useState("");
   const [stats, setStats] = useState<{ username: string; avatar: string; title: string; bullet_rating_current: number; bullet_rating_highest: number; blitz_rating_current: number; blitz_rating_highest: number; rapid_rating_current: number; rapid_rating_highest: number; } | null>(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -33,9 +34,24 @@ export default function Home() {
               <p className="text-black dark:text-zinc-50 mb-2">Blitz: {stats.blitz_rating_current || "N/A"} Peak: {stats.blitz_rating_highest || "N/A"}</p>
               <p className="text-black dark:text-zinc-50 mb-2">Rapid: {stats.rapid_rating_current || "N/A"} Peak: {stats.rapid_rating_highest || "N/A"}</p>
 
-              <div style={{ width: 600 }}>
-                  <ChessboardComponent />
+              <div style={{ width: 450 }}>
+                  <ChessboardAnalysisComponent onAnalysisAction={setAnalysis} />
               </div>
+
+              {analysis && (
+                  <div className="font-mono text-sm text-black dark:text-zinc-50 mt-2">
+                      <div>Eval: {analysis.mate ? `Mate in ${analysis.mate}` : analysis.eval.toFixed(2)}</div>
+                      <div>Depth: {analysis.depth}</div>
+                  </div>
+              )}
+
+              {analysis && (
+                  <div className="font-mono text-sm text-black dark:text-zinc-50 mt-2">
+                      {analysis.pv.split("\n").map((line, i) => (
+                          <div key={i}>Line {i+1}: {line}</div>
+                      ))}
+                  </div>
+              )}
 
               <button
                   onClick={() => setStats(null)}
