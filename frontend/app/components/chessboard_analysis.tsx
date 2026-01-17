@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import {Chess, PieceSymbol, Square} from "chess.js";
+import { useRef, useState, useEffect, ForwardedRef } from "react";
+import { Chess } from "chess.js";
 import Engine from "../Engine/engine";
-import ChessboardComponent from "./chessboard";
+import ChessboardComponent, {BaseChessboardHandles} from "./chessboard";
 
 export type Analysis = {
     eval: number;
@@ -14,13 +14,11 @@ export type Analysis = {
 
 interface Props {
     onAnalysisAction?: (analysis: Analysis) => void;
+    boardRef?: ForwardedRef<BaseChessboardHandles>;
 }
 
-export default function ChessboardAnalysisComponent({ onAnalysisAction }: Props) {
-    const chessGameRef = useRef(new Chess());
-    const chessGame = chessGameRef.current;
-
-    const [position, setPosition] = useState(chessGame.fen());
+export default function ChessboardAnalysisComponent({ onAnalysisAction, boardRef }: Props) {
+    const [position, setPosition] = useState(new Chess().fen());
     const engineRef = useRef<Engine | null>(null);
     const multiPvLinesRef = useRef<string[]>([]);
 
@@ -48,7 +46,7 @@ export default function ChessboardAnalysisComponent({ onAnalysisAction }: Props)
             if (!pvMatch) return;
 
             const pvUci = pvMatch[1];
-            const tempChess = new Chess(chessGame.fen());
+            const tempChess = new Chess(position);
             const sanMoves: string[] = [];
 
             for (const uciMove of pvUci.split(" ")) {
@@ -67,7 +65,7 @@ export default function ChessboardAnalysisComponent({ onAnalysisAction }: Props)
             const mateMatch = uciMessage.match(/score mate (-?\d+)/);
 
             const evalScore = cpMatch
-                ? (chessGame.turn() === "w" ? 1 : -1) * Number(cpMatch[1]) / 100
+                ? (tempChess.turn() === "w" ? 1 : -1) * Number(cpMatch[1]) / 100
                 : 0;
             const mate = mateMatch ? mateMatch[1] : undefined;
 
@@ -80,24 +78,23 @@ export default function ChessboardAnalysisComponent({ onAnalysisAction }: Props)
         });
 
         return () => engine.terminate();
-    }, [onAnalysisAction, chessGame.turn()]);
+    }, [onAnalysisAction, position]);
 
     // Evaluate whenever position changes
     useEffect(() => {
         if (!engineRef.current) return;
-        if (chessGame.isGameOver() || chessGame.isDraw()) return;
+        const chess = new Chess(position);
+        if (chess.isGameOver() || chess.isDraw()) return;
 
         engineRef.current.stop();
-        engineRef.current.evaluatePosition(position, 23);
-    }, [position, chessGame]);
+        engineRef.current.evaluatePosition(position, 18);
+    }, [position]);
 
     return (
         <ChessboardComponent
+            ref={boardRef}
             initialPosition={position}
-            onMove={(from: Square, to: Square, promotion?: PieceSymbol) => {
-                chessGameRef.current.move({ from, to, promotion });
-                setPosition(chessGameRef.current.fen());
-            }}
+            onPositionChange={(fen: string) => setPosition(fen)}
         />
     );
 }

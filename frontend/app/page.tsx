@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import {useRef, useState} from "react";
 import ChessboardAnalysisComponent, { Analysis } from "./components/chessboard_analysis";
+import { BaseChessboardHandles } from "./components/chessboard";
 
 export default function Home() {
   const [username, setUsername] = useState("");
   const [stats, setStats] = useState<{ username: string; avatar: string; title: string; bullet_rating_current: number; bullet_rating_highest: number; blitz_rating_current: number; blitz_rating_highest: number; rapid_rating_current: number; rapid_rating_highest: number; } | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const boardRef = useRef<BaseChessboardHandles>(null);
 
   const fetchStats = async () => {
     try {
@@ -35,7 +37,10 @@ export default function Home() {
               <p className="text-black dark:text-zinc-50 mb-2">Rapid: {stats.rapid_rating_current || "N/A"} Peak: {stats.rapid_rating_highest || "N/A"}</p>
 
               <div style={{ width: 450 }}>
-                  <ChessboardAnalysisComponent onAnalysisAction={setAnalysis} />
+                  <ChessboardAnalysisComponent
+                      onAnalysisAction={setAnalysis}
+                      boardRef={boardRef}
+                  />
               </div>
 
               {analysis && (
@@ -52,6 +57,9 @@ export default function Home() {
                       ))}
                   </div>
               )}
+
+              <button onClick={() => boardRef.current?.undo()}>Undo</button>
+              <button onClick={() => boardRef.current?.redo()}>Redo</button>
 
               <button
                   onClick={() => setStats(null)}
