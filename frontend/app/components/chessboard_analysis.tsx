@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, ForwardedRef } from "react";
 import { Chess } from "chess.js";
-import Engine from "../Engine/engine";
+import Engine from "../engine/engine";
 import ChessboardComponent, {BaseChessboardHandles} from "./chessboard";
 
 export type Analysis = {
