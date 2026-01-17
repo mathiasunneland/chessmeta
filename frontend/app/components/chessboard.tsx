@@ -2,7 +2,13 @@
 
 import { useRef, useState, useLayoutEffect } from "react";
 import { Chess, Square, PieceSymbol } from "chess.js";
-import { Chessboard, chessColumnToColumnIndex, PieceDropHandlerArgs, SquareHandlerArgs } from "react-chessboard";
+import {
+    Chessboard,
+    chessColumnToColumnIndex,
+    PieceDropHandlerArgs,
+    PieceHandlerArgs,
+    SquareHandlerArgs
+} from "react-chessboard";
 
 export default function ChessboardComponent() {
     const chessGameRef = useRef(new Chess());
@@ -72,18 +78,41 @@ export default function ChessboardComponent() {
 
     // Click handler
     function onSquareClick({ square, piece }: SquareHandlerArgs) {
-        if (!moveFrom && piece) {
-            const hasOptions = getMoveOptions(square as Square);
-            if (hasOptions) setMoveFrom(square);
+        if (square === moveFrom) {
+            setMoveFrom('');
+            setOptionSquares({});
             return;
         }
 
         if (moveFrom) {
-            handleMove(moveFrom as Square, square as Square);
+            const moved = handleMove(moveFrom as Square, square as Square);
+
+            if (!moved && piece) {
+                const hasOptions = getMoveOptions(square as Square);
+                if (hasOptions) setMoveFrom(square);
+                else setMoveFrom('');
+            } else if (!moved) {
+                setMoveFrom('');
+                setOptionSquares({});
+            }
+
+            return;
+        }
+
+        if (piece) {
+            const hasOptions = getMoveOptions(square as Square);
+            if (hasOptions) setMoveFrom(square);
         }
     }
 
-    // Drag handler
+    // Drag start handler
+    function onPieceDrag({ square, piece, isSparePiece }: { square: string | null; piece: { pieceType: string }; isSparePiece: boolean }) {
+        if (!square || !piece) return;
+        const hasOptions = getMoveOptions(square as Square);
+        if (hasOptions) setMoveFrom(square);
+    }
+
+    // Drag end handler
     function onPieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs) {
         if (!targetSquare) return false;
         return handleMove(sourceSquare as Square, targetSquare as Square);
@@ -100,6 +129,7 @@ export default function ChessboardComponent() {
         setMoveFrom('');
     }
 
+    // Calculate left position for promotion overlay
     const promotionSquareLeft =
         promotionMove?.targetSquare && squareWidth
             ? squareWidth *
@@ -110,7 +140,38 @@ export default function ChessboardComponent() {
             )
             : 0;
 
+    // Calculate top position for promotion overlay
+    const promotionSquareTop =
+        promotionMove && squareWidth
+            ? chessGame.get(promotionMove.targetSquare as Square)?.color === 'w'
+                ? squareWidth * 4
+                : 0
+            : 0;
+
+    // Calculate order of pieces for promotion overlay
+    const promotionPiecesOrdered: PieceSymbol[] = promotionMove
+        ? chessGame.get(promotionMove.targetSquare as Square)?.color === 'w'
+            ? ["n", "b", "r", "q"]
+            : ["q", "r", "b", "n"]
+        : ["q", "r", "b", "n"];
+
+    // Cancel promotion when clicking outside
+    useLayoutEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (!promotionMove) return;
+
+            const target = e.target as HTMLElement;
+            if (!target.closest(".promotion-overlay")) {
+                setPromotionMove(null);
+            }
+        };
+
+        document.addEventListener("click", handleClickOutside);
+        return () => document.removeEventListener("click", handleClickOutside);
+    }, [promotionMove]);
+
     const chessboardOptions = {
+        onPieceDrag,
         onPieceDrop,
         onSquareClick,
         position: chessPosition,
@@ -124,7 +185,7 @@ export default function ChessboardComponent() {
                 <div
                     style={{
                         position: "absolute",
-                        top: 0,
+                        top: promotionSquareTop,
                         left: promotionSquareLeft,
                         width: squareWidth,
                         zIndex: 1000,
@@ -134,7 +195,7 @@ export default function ChessboardComponent() {
                         boxShadow: "0 0 10px rgba(0,0,0,0.5)",
                     }}
                 >
-                    {(["q", "r", "n", "b"] as PieceSymbol[]).map((piece) => (
+                    {promotionPiecesOrdered.map((piece, idx) => (
                         <button
                             key={piece}
                             onClick={() => onPromotionPieceSelect(piece)}
