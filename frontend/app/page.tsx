@@ -38,7 +38,7 @@ export default function Home() {
               <p className="text-black dark:text-zinc-50 mb-2">Blitz: {stats.blitz_rating_current || "N/A"} Peak: {stats.blitz_rating_highest || "N/A"}</p>
               <p className="text-black dark:text-zinc-50 mb-2">Rapid: {stats.rapid_rating_current || "N/A"} Peak: {stats.rapid_rating_highest || "N/A"}</p>
 
-              <div style={{ width: 450 }}>
+              <div style={{ width: 350 }}>
                   <ChessboardAnalysisComponent
                       onAnalysisAction={setAnalysis}
                       boardRef={boardRef}
@@ -50,21 +50,22 @@ export default function Home() {
               </div>
 
               {analysis && (
-                  <div className="font-mono text-sm text-black dark:text-zinc-50 mt-2">
-                      <div>Eval: {analysis.mate ? `Mate in ${analysis.mate}` : analysis.eval.toFixed(2)}</div>
-                      <div>Depth: {analysis.depth}</div>
-                  </div>
-              )}
+                  <div className="font-mono text-sm text-black dark:text-zinc-50 mt-3">
+                      <div className="text-center text-xs opacity-70 mb-2">
+                          Depth {analysis.depth}
+                      </div>
 
-              {analysis && (
-                  <div className="font-mono text-sm text-black dark:text-zinc-50 mt-2">
-                      {analysis.pv.split("\n").map((line, i) => (
-                          <div key={i}>Line {i+1}: {line}</div>
+                      {analysis.lines.map((l, i) => (
+                          <div key={i} className="flex gap-3">
+                              <div className="w-12 text-right">
+                                  {l.eval === null ? `#${l.mate}` : l.eval.toFixed(2)}
+                              </div>
+                              <div>{l.pv}</div>
+                          </div>
                       ))}
                   </div>
               )}
 
-              {/* Move history */}
               <div className="font-mono text-sm text-black dark:text-zinc-50 mt-4">
                   <div>
                       {moves.map((m, i) => (

@@ -5,11 +5,15 @@ import { Chess } from "chess.js";
 import Engine from "../engine/engine";
 import ChessboardComponent, {BaseChessboardHandles} from "./chessboard";
 
-export type Analysis = {
-    eval: number;
-    depth: number;
+export type AnalysisLine = {
+    eval: number | null;
+    mate?: number;
     pv: string;
-    mate?: string;
+};
+
+export type Analysis = {
+    depth: number;
+    lines: AnalysisLine[];
 };
 
 interface Props {
@@ -21,7 +25,7 @@ interface Props {
 export default function ChessboardAnalysisComponent({ onAnalysisAction, boardRef, onMovesChange }: Props) {
     const [position, setPosition] = useState(new Chess().fen());
     const engineRef = useRef<Engine | null>(null);
-    const multiPvLinesRef = useRef<string[]>([]);
+    const linesRef = useRef<AnalysisLine[]>([]);
 
     // Init engine
     useEffect(() => {
@@ -31,50 +35,53 @@ export default function ChessboardAnalysisComponent({ onAnalysisAction, boardRef
         engineRef.current.stockfish?.postMessage("setoption name MultiPV value 3");
 
         engine.onMessage((msg) => {
-            const uciMessage = msg.uciMessage;
+            const uci = msg.uciMessage;
+            if (!uci.startsWith("info") || !uci.includes(" pv ")) return;
 
-            if (!uciMessage.startsWith("info") || !uciMessage.includes(" pv ")) return;
-
-            const depthMatch = uciMessage.match(/depth (\d+)/);
-            if (!depthMatch) return;
-            const depth = Number(depthMatch[1]);
+            const depth = Number(uci.match(/depth (\d+)/)?.[1] ?? 0);
             if (depth < 10) return;
 
-            const multipvMatch = uciMessage.match(/multipv (\d+)/);
-            const multipv = multipvMatch ? Number(multipvMatch[1]) - 1 : 0;
+            const multipv = Number(uci.match(/multipv (\d+)/)?.[1] ?? 1) - 1;
 
-            const pvMatch = uciMessage.match(/ pv (.+)/);
-            if (!pvMatch) return;
+            const pvUci = uci.match(/ pv (.+)/)?.[1];
+            if (!pvUci) return;
 
-            const pvUci = pvMatch[1];
-            const tempChess = new Chess(position);
-            const sanMoves: string[] = [];
+            const temp = new Chess(position);
+            const san: string[] = [];
 
-            for (const uciMove of pvUci.split(" ")) {
-                const from = uciMove.slice(0, 2);
-                const to = uciMove.slice(2, 4);
-                const promotion = uciMove[4] as string | undefined;
+            for (const m of pvUci.split(" ")) {
                 try {
-                    const move = tempChess.move({ from, to, promotion });
-                    if (move) sanMoves.push(move.san);
-                } catch { break; }
+                    const move = temp.move({
+                        from: m.slice(0, 2),
+                        to: m.slice(2, 4),
+                        promotion: m[4],
+                    });
+                    if (move) san.push(move.san);
+                } catch {
+                    break;
+                }
             }
 
-            if (sanMoves.length) multiPvLinesRef.current[multipv] = sanMoves.join(" ");
+            const mate = uci.match(/score mate (-?\d+)/)?.[1];
+            const cp = uci.match(/score cp (-?\d+)/)?.[1];
 
-            const cpMatch = uciMessage.match(/score cp (-?\d+)/);
-            const mateMatch = uciMessage.match(/score mate (-?\d+)/);
+            const sideToMove = position.split(" ")[1];
+            const evalScore =
+                mate !== undefined
+                    ? null
+                    : cp
+                        ? (sideToMove === "w" ? 1 : -1) * Number(cp) / 100
+                        : 0;
 
-            const evalScore = cpMatch
-                ? (tempChess.turn() === "w" ? 1 : -1) * Number(cpMatch[1]) / 100
-                : 0;
-            const mate = mateMatch ? mateMatch[1] : undefined;
+            linesRef.current[multipv] = {
+                eval: evalScore,
+                mate: mate ? Number(mate) : undefined,
+                pv: san.join(" "),
+            };
 
             onAnalysisAction?.({
-                eval: evalScore,
                 depth,
-                pv: multiPvLinesRef.current.filter(Boolean).join("\n"),
-                mate,
+                lines: linesRef.current.filter(Boolean),
             });
         });
 
@@ -88,7 +95,7 @@ export default function ChessboardAnalysisComponent({ onAnalysisAction, boardRef
         if (chess.isGameOver() || chess.isDraw()) return;
 
         engineRef.current.stop();
-        engineRef.current.evaluatePosition(position, 18);
+        engineRef.current.evaluatePosition(position, 24);
     }, [position]);
 
     return (
