@@ -12,16 +12,19 @@ import {
 export interface BaseChessboardProps {
     initialPosition?: string;
     onPositionChange?: (fen: string) => void;
+    onMovesChange?: (moves: string[], pgn: string) => void;
 }
 
 export interface BaseChessboardHandles {
     undo: () => void;
     redo: () => void;
     getFen: () => string;
+    getPgn: () => string;
+    getMoves: () => string[];
 }
 
 const ChessboardComponent = forwardRef<BaseChessboardHandles, BaseChessboardProps>(
-    ({ initialPosition, onPositionChange }, ref) => {
+    ({ initialPosition, onPositionChange, onMovesChange }, ref) => {
         const chessGameRef = useRef(new Chess(initialPosition));
         const chessGame = chessGameRef.current;
 
@@ -34,6 +37,8 @@ const ChessboardComponent = forwardRef<BaseChessboardHandles, BaseChessboardProp
         const [promotionMove, setPromotionMove] = useState<Omit<PieceDropHandlerArgs, 'piece'> | null>(null);
 
         const redoStackRef = useRef<ReturnType<Chess['move']>[]>([]);
+        const [moveHistory, setMoveHistory] = useState<string[]>([]);
+        const [pgnHistory, setPgnHistory] = useState<string>('');
 
         useLayoutEffect(() => {
             if (chessboardRef.current) {
@@ -43,6 +48,15 @@ const ChessboardComponent = forwardRef<BaseChessboardHandles, BaseChessboardProp
                 }
             }
         }, []);
+
+        // Update history after every move/undo/redo
+        const updateHistory = () => {
+            const moves = chessGame.history();
+            setMoveHistory(moves);
+            const pgn = chessGame.pgn();
+            setPgnHistory(pgn);
+            onMovesChange?.(moves, pgn);
+        };
 
         // Highlight move options
         function getMoveOptions(square: Square) {
@@ -83,6 +97,7 @@ const ChessboardComponent = forwardRef<BaseChessboardHandles, BaseChessboardProp
             redoStackRef.current = [];
             setChessPosition(chessGame.fen());
             onPositionChange?.(chessGame.fen());
+            updateHistory();
             setOptionSquares({});
             setMoveFrom('');
             return true;
@@ -95,6 +110,7 @@ const ChessboardComponent = forwardRef<BaseChessboardHandles, BaseChessboardProp
                 redoStackRef.current.push(move);
                 setChessPosition(chessGame.fen());
                 onPositionChange?.(chessGame.fen());
+                updateHistory();
             }
         }
 
@@ -105,10 +121,17 @@ const ChessboardComponent = forwardRef<BaseChessboardHandles, BaseChessboardProp
                 chessGame.move(move);
                 setChessPosition(chessGame.fen());
                 onPositionChange?.(chessGame.fen());
+                updateHistory();
             }
         }
 
-        useImperativeHandle(ref, () => ({undo, redo, getFen: () => chessGame.fen()}));
+        useImperativeHandle(ref, () => ({
+            undo,
+            redo,
+            getFen: () => chessGame.fen(),
+            getPgn: () => chessGame.pgn(),
+            getMoves: () => chessGame.history(),
+        }));
 
         // Add undo and redo to arrow keys
         useLayoutEffect(() => {
@@ -177,6 +200,7 @@ const ChessboardComponent = forwardRef<BaseChessboardHandles, BaseChessboardProp
             redoStackRef.current = [];
             setChessPosition(chessGame.fen());
             onPositionChange?.(chessGame.fen());
+            updateHistory();
             setPromotionMove(null);
             setOptionSquares({});
             setMoveFrom('');

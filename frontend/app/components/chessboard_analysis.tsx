@@ -15,9 +15,10 @@ export type Analysis = {
 interface Props {
     onAnalysisAction?: (analysis: Analysis) => void;
     boardRef?: ForwardedRef<BaseChessboardHandles>;
+    onMovesChange?: (moves: string[], pgn: string) => void;
 }
 
-export default function ChessboardAnalysisComponent({ onAnalysisAction, boardRef }: Props) {
+export default function ChessboardAnalysisComponent({ onAnalysisAction, boardRef, onMovesChange }: Props) {
     const [position, setPosition] = useState(new Chess().fen());
     const engineRef = useRef<Engine | null>(null);
     const multiPvLinesRef = useRef<string[]>([]);
@@ -95,6 +96,7 @@ export default function ChessboardAnalysisComponent({ onAnalysisAction, boardRef
             ref={boardRef}
             initialPosition={position}
             onPositionChange={(fen: string) => setPosition(fen)}
+            onMovesChange={onMovesChange}
         />
     );
 }
