@@ -88,11 +88,10 @@ export default class Engine {
         });
     }
 
-    evaluatePosition(fen: string, depth = 12) {
+    evaluatePosition(fen: string, movetimeMs = 1500) {
         if (!this.stockfish) return;
-        if (depth > 24) depth = 24;
         this.stockfish.postMessage(`position fen ${fen}`);
-        this.stockfish.postMessage(`go depth ${depth}`);
+        this.stockfish.postMessage(`go movetime ${movetimeMs}`);
     }
 
     stop() {
