@@ -14,7 +14,7 @@ const nextConfig = {
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https:;
               font-src 'self' data:;
-              connect-src 'self' http://127.0.0.1:8000;
+              connect-src 'self' blob: http://127.0.0.1:8000;
             `.replace(/\s{2,}/g, " ").trim(),
                     },
                 ],

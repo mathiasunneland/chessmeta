@@ -35,27 +35,29 @@ export default class Engine {
         }
     }
 
-    private loadStockfish() {
+    private async loadStockfish() {
+        if (typeof window === "undefined") return;
+
         try {
-            this.stockfish = new Worker("/stockfish/stockfish.wasm.js");
+            this.stockfish = new Worker("/stockfish/stockfish-17.1-single-a496a04.js", {
+                type: "module",
+            });
 
             this.onMessage = (callback: (msg: EngineMessage) => void) => {
                 this.stockfish?.addEventListener("message", (event) => {
                     let msg: string;
-                    if (typeof event.data === "string") {
-                        msg = event.data;
-                    } else if (event.data instanceof ArrayBuffer) {
+                    if (typeof event.data === "string") msg = event.data;
+                    else if (event.data instanceof ArrayBuffer)
                         msg = new TextDecoder().decode(event.data);
-                    } else {
-                        msg = JSON.stringify(event.data);
-                    }
+                    else msg = JSON.stringify(event.data);
+
                     callback(this.transformSFMessageData(msg));
                 });
             };
 
             this.init();
         } catch (err) {
-            console.error("Failed to load Stockfish Worker:", err);
+            console.error("Failed to load Stockfish:", err);
         }
     }
 
