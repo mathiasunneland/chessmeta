@@ -1,7 +1,6 @@
-// next.config.ts
 const nextConfig = {
     async headers() {
-        if (process.env.NODE_ENV !== "production") return [];
+        if (process.env.NODE_ENV === "production") return [];
 
         return [
             {
@@ -15,7 +14,7 @@ const nextConfig = {
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https:;
               font-src 'self' data:;
-              connect-src 'self';
+              connect-src 'self' http://127.0.0.1:8000;
             `.replace(/\s{2,}/g, " ").trim(),
                     },
                 ],
