@@ -36,26 +36,38 @@ export default class Engine {
     }
 
     private loadStockfish() {
-        this.stockfish = new Worker("/stockfish/stockfish.wasm.js");
+        try {
+            this.stockfish = new Worker("/stockfish/stockfish.wasm.js");
 
-        this.onMessage = (callback: (msg: EngineMessage) => void) => {
-            this.stockfish?.addEventListener("message", (event) => {
-                callback(this.transformSFMessageData(event.data));
-            });
-        };
-        this.init();
+            this.onMessage = (callback: (msg: EngineMessage) => void) => {
+                this.stockfish?.addEventListener("message", (event) => {
+                    let msg: string;
+                    if (typeof event.data === "string") {
+                        msg = event.data;
+                    } else if (event.data instanceof ArrayBuffer) {
+                        msg = new TextDecoder().decode(event.data);
+                    } else {
+                        msg = JSON.stringify(event.data);
+                    }
+                    callback(this.transformSFMessageData(msg));
+                });
+            };
+
+            this.init();
+        } catch (err) {
+            console.error("Failed to load Stockfish Worker:", err);
+        }
     }
 
     private transformSFMessageData(msg: string): EngineMessage {
-        const uciMessage = msg;
         return {
-            uciMessage,
-            bestMove: uciMessage.match(/bestmove\s+(\S+)/)?.[1],
-            ponder: uciMessage.match(/ponder\s+(\S+)/)?.[1],
-            positionEvaluation: uciMessage.match(/score cp (-?\d+)/)?.[1],
-            possibleMate: uciMessage.match(/score mate (-?\d+)/)?.[1],
-            pv: uciMessage.match(/ pv (.*)/)?.[1],
-            depth: Number(uciMessage.match(/ depth (\d+)/)?.[1] ?? 0),
+            uciMessage: msg,
+            bestMove: msg.match(/bestmove\s+(\S+)/)?.[1],
+            ponder: msg.match(/ponder\s+(\S+)/)?.[1],
+            positionEvaluation: msg.match(/score cp (-?\d+)/)?.[1],
+            possibleMate: msg.match(/score mate (-?\d+)/)?.[1],
+            pv: msg.match(/ pv (.*)/)?.[1],
+            depth: Number(msg.match(/ depth (\d+)/)?.[1] ?? 0),
         };
     }
 
@@ -88,5 +100,6 @@ export default class Engine {
     terminate() {
         this.isReady = false;
         this.stockfish?.postMessage("quit");
+        this.stockfish?.terminate();
     }
 }
