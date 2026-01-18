@@ -95,7 +95,7 @@ export default function ChessboardAnalysisComponent({ onAnalysisAction, boardRef
         if (chess.isGameOver() || chess.isDraw()) return;
 
         engineRef.current.stop();
-        engineRef.current.evaluatePosition(position, 24);
+        engineRef.current.evaluatePosition(position, 5000);
     }, [position]);
 
     return (
